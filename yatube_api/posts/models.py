@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 
 User = get_user_model()
@@ -44,3 +45,12 @@ class Follow(models.Model):
         User, on_delete=models.CASCADE, related_name='follower')
     following = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='following')
+
+    def clean(self):
+        if self.user == self.following:
+            raise ValidationError('Нельзя подписаться на себя')
+        if Follow.objects.filter(
+            user=self.user,
+            following=self.following
+        ).exists():
+            raise ValidationError('Подписка уже существует')
